@@ -5,10 +5,13 @@
   const itemHiddenClass = 'TimelineItem-Hidden';
   const toggleButtonID = 'tidy-timeline-button';
 
+  const refreshEventsInterval = 5_000;
+
   let status = 'active';
   let numMatchingEvents = 0;
   let pageUrl;
   let monitorInterval;
+  let hideEventsInterval;
 
   const showEvent = (el) => {
     el.classList.remove(itemHiddenClass);
@@ -127,6 +130,7 @@
       showEvent(el);
     });
     updateStatus('idle');
+    clearInterval(hideEventsInterval);
   };
 
   const handleClick = () => {
@@ -153,6 +157,7 @@
       if (timeline) {
         startWatchingForTimelineChanges(timeline);
         tidyTimeline();
+        hideEventsPeriodically(); // Start hiding events periodically
       } else {
         stopWatching();
         await new Promise((res) => setTimeout(res, 500));
@@ -161,8 +166,19 @@
     }
   };
 
+  const hideEventsPeriodically = () => {
+    if (hideEventsInterval) {
+      clearInterval(hideEventsInterval);
+    }
+
+    console.log('Hiding events periodically');
+
+    hideEventsInterval = setInterval(tidyTimeline, refreshEventsInterval); // Adjust interval as needed (e.g., 10 seconds)
+  };
+
   const initialise = () => {
     monitorInterval = setInterval(monitor, 1000);
+    hideEventsPeriodically();
   };
 
   window.addEventListener(
@@ -177,6 +193,7 @@
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
       clearInterval(monitorInterval);
+      clearInterval(hideEventsInterval);
     } else {
       initialise();
     }
